@@ -17,9 +17,9 @@ Try it out with our [Colab notebook](https://colab.research.google.com/github/aq
 (not yet visible from Colab because the repo is still private).
 
 Unlike DeepMind's public code, OpenFold is also trainable. It can be trained 
-with or without [DeepSpeed](https://github.com/microsoft/deepspeed) and with 
-mixed precision. `bfloat16` training is not currently supported, but will be 
-in the future.
+with [DeepSpeed](https://github.com/microsoft/deepspeed) and with mixed 
+precision. `bfloat16` training is not currently supported, but will be in the 
+future.
 
 ## Installation (Linux)
 
@@ -63,6 +63,12 @@ To download the genetic databases used by AlphaFold/OpenFold, run:
 scripts/download_all_data.sh data/
 ```
 
+Alternatively, you can use raw MSAs from 
+[ProteinNet](https://github.com/aqlaboratory/proteinnet). After downloading
+the database, use `scripts/prepare_proteinnet_msas.py` to convert the data into
+a format recognized by the OpenFold parser. The resulting directory becomes the
+`alignment_dir` used in subsequent steps.
+
 ### Inference
 
 To run inference on a sequence `target.fasta` (e.g., `wget https://www.rcsb.org/fasta/entry/4DSN`) using a set of DeepMind's pretrained parameters, run e.g.
@@ -89,9 +95,11 @@ where `data` is the same directory as in the previous step. If `jackhmmer`, `hhb
 ### Training
 
 After activating the OpenFold environment with `source scripts/activate_conda_env.sh`, install OpenFold by running
+
 ```bash
 python setup.py install
 ```
+
 To train the model, you will first need to precompute protein alignments. Create `mmcif_dir/` and download `.cif` files from the PDB (e.g., `wget https://files.rcsb.org/download/4DSN.cif`). Then run:
 
 ```bash
@@ -129,9 +137,9 @@ python3 train_openfold.py mmcif_dir/ alignment_dir/ template_mmcif_dir/ \
     --template_release_dates_cache_path mmcif_cache.json \ 
     --precision 16 \
     --gpus 8 --replace_sampler_ddp=True \
-    --accelerator ddp \ 
     --seed 42 \ # in multi-gpu settings, the seed must be specified
-    --deepspeed_config_path deepspeed_config.json
+    --deepspeed_config_path deepspeed_config.json \
+    --resume_from_ckpt ckpt_dir/
 ```
 
 where `--template_release_dates_cache_path` is a path to the `.json` file
