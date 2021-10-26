@@ -21,7 +21,7 @@ import torch
 from openfold.config import model_config
 from openfold.data.data_modules import (
     OpenFoldDataModule,
-    DummyDataLoader,
+    #DummyDataLoader,
 )
 from openfold.model.model import AlphaFold
 from openfold.utils.callbacks import (
@@ -100,7 +100,7 @@ def main(args):
     if(args.seed is not None):
         seed_everything(args.seed) 
 
-    config = model_config(
+    config = model_config( # fixes num_workers at 1, increase to number of CPUs?
         "model_1", 
         train=True, 
         low_prec=(args.precision == 16)
@@ -117,14 +117,19 @@ def main(args):
     data_module.setup()
    
     callbacks = []
+    checkpoint_dir = os.path.join(args.output_dir, "checkpoints")
     if(args.checkpoint_best_val):
-        checkpoint_dir = os.path.join(args.output_dir, "checkpoints")
         mc = ModelCheckpoint(
             dirpath=checkpoint_dir,
             filename="openfold_{epoch}_{step}_{val_loss:.2f}",
             monitor="val_loss",
         )
-        callbacks.append(mc)
+    else:
+        mc = ModelCheckpoint(
+            dirpath=checkpoint_dir,
+            filename="openfold_{epoch}_{step}"
+        )
+    callbacks.append(mc)
 
     if(args.early_stopping):
         es = EarlyStoppingVerbose(
@@ -142,12 +147,20 @@ def main(args):
     if(args.deepspeed_config_path is not None):
         plugins.append(DeepSpeedPlugin(config=args.deepspeed_config_path))
     
+    #if args.resume_from_checkpoint is not None:
+    #    trainer = pl.Trainer(gpus = args.gpus, resume_from_checkpoint = args.resume_from_checkpoint)
+    #else:
     trainer = pl.Trainer.from_argparse_args(
         args,
         plugins=plugins,
+        callbacks=callbacks
     )
+    print(f'TRAINER={trainer}\n')
+    if args.resume_from_checkpoint is None:
+        trainer.fit(model_module, datamodule=data_module)
+    else:
+        trainer.fit(model_module, datamodule=data_module)#, ckpt_path=args.resume_from_checkpoint)
 
-    trainer.fit(model_module, datamodule=data_module)
     trainer.save_checkpoint("final.ckpt")
 
 
@@ -240,6 +253,11 @@ if __name__ == "__main__":
         "--patience", type=int, default=3,
         help="Early stopping patience"
     )
+    #parser.add_argument(
+    #    "--resume_from_checkpoint", type=str, default=None,
+    #    help="Path to PyTorch Ligning checkpoint, if you wish to resume training"
+    #)
+    #TODO: get checkpointing frequency
     parser = pl.Trainer.add_argparse_args(parser)
     
     parser.set_defaults(
@@ -247,10 +265,11 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
+    print(f'train_openfold.py: {args}')
     if(args.seed is None and 
         ((args.gpus is not None and args.gpus > 1) or 
          (args.num_nodes is not None and args.num_nodes > 1))):
         raise ValueError("For distributed training, --seed must be specified")
 
     main(args)
+#(openfold_venv) u00u98too4mkqFBu8M357@dgx1-003:~/openfold$ python3 train_openfold.py mmcif_dir/ alignment_dir/ template_mmcif_dir/ train_op/    2021-10-10 --template_release_dates_cache_path mmcif_cache.json --precision 16 --gpus 8 --replace_sampler_ddp=True --accelerator ddp --seed 42 --deepspeed_config_path deepspeed_config.json --default_root_dir train_op  --resume_from_checkpoint 'train_op/lightning_logs/version_0/checkpoints/epoch=10-step=10.ckpt'
