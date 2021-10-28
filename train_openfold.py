@@ -168,12 +168,14 @@ def main(args):
         ckpt_path = None
     else:
         ckpt_path = args.resume_from_ckpt
-
+    t0 = time.time()
     trainer.fit(
         model_module, 
         datamodule=data_module,
         ckpt_path=ckpt_path,
     )
+    t1 = time.time()
+    print(f'Fitting time per epoch = {(t1 - t0) / args.max_epochs}')
     #print(f'TRAINER={trainer}\n')
     #if args.resume_from_checkpoint is None:
     #    trainer.fit(model_module, datamodule=data_module)
@@ -300,4 +302,6 @@ if __name__ == "__main__":
         raise ValueError("For distributed training, --seed must be specified")
 
     main(args)
-#(openfold_venv) u00u98too4mkqFBu8M357@dgx1-003:~/openfold$ python3 train_openfold.py mmcif_dir/ alignment_dir/ template_mmcif_dir/ train_op/    2021-10-10 --template_release_dates_cache_path mmcif_cache.json --precision 16 --gpus 8 --replace_sampler_ddp=True --accelerator ddp --seed 42 --deepspeed_config_path deepspeed_config.json --default_root_dir train_op  --resume_from_checkpoint 'train_op/lightning_logs/version_0/checkpoints/epoch=10-step=10.ckpt'
+#(openfold_venv) u00u98too4mkqFBu8M357@dgx1-003:~/openfold$ python3 train_openfold.py mmcif_dir_new/ alignment_dir_new/ template_mmcif_dir/ train_op_new/    2021-10-10 --template_release_dates_cache_path mmcif_cache_new.json --precision 16 --gpus 8 --replace_sampler_ddp=True --accelerator ddp --seed 42 --deepspeed_config_path deepspeed_config.json --default_root_dir train_op_new  --resume_from_checkpoint 'train_op/lightning_logs/version_0/checkpoints/epoch=10-step=10.ckpt'
+
+#train_openfold.py: Namespace(accumulate_grad_batches=None, amp_backend='native', amp_level=None, auto_lr_find=False, auto_scale_batch_size=False, auto_select_gpus=False, benchmark=False, check_val_every_n_epoch=1, checkpoint_best_val=True, checkpoint_callback=None, deepspeed_config_path='deepspeed_config.json', default_root_dir='train_op_8', detect_anomaly=False, deterministic=False, devices=None, distillation_alignment_dir=None, distillation_data_dir=None, distillation_mapping_path=None, early_stopping=False, enable_checkpointing=True, enable_model_summary=True, enable_progress_bar=True, fast_dev_run=False, flush_logs_every_n_steps=None, gpus=8, gradient_clip_algorithm=None, gradient_clip_val=None, ipus=None, kalign_binary_path='/usr/bin/kalign', limit_predict_batches=1.0, limit_test_batches=1.0, limit_train_batches=1.0, limit_val_batches=1.0, log_every_n_steps=50, log_gpu_memory=None, logger=True, max_epochs=None, max_steps=-1, max_template_date='2021-10-10', max_time=None, min_delta=0, min_epochs=None, min_steps=None, move_metrics_to_cpu=False, multiple_trainloader_mode='max_size_cycle', num_nodes=1, num_processes=1, num_sanity_val_steps=0, output_dir='train_op_8', overfit_batches=0.0, patience=3, plugins=None, precision=16, prepare_data_per_node=None, process_position=0, profiler=None, progress_bar_refresh_rate=None, reload_dataloaders_every_epoch=False, reload_dataloaders_every_n_epochs=0, replace_sampler_ddp=True, resume_from_ckpt=None, resume_model_weights_only=False, seed=42, stochastic_weight_avg=False, strategy=None, sync_batchnorm=False, template_mmcif_dir='template_mmcif_dir', template_release_dates_cache_path='mmcif_cache_8.json', terminate_on_nan=None, tpu_cores=None, track_grad_norm=-1, train_alignment_dir='alignment_dir_8', train_data_dir='mmcif_dir_8', train_mapping_path=None, use_small_bfd=False, val_alignment_dir=None, val_check_interval=1.0, val_data_dir=None, weights_save_path=None, weights_summary='top')
