@@ -16,6 +16,7 @@
 import argparse
 from datetime import date
 import logging
+logging.basicConfig(level=logging.DEBUG)
 import numpy as np
 import os
 
@@ -92,11 +93,12 @@ def main(args):
     alignment_dir = os.path.join(output_dir_base, "alignments")
     if not os.path.exists(alignment_dir):
         os.makedirs(alignment_dir)
-
-    logging.info("Generating features...")
-    alignment_runner.run(
-        args.fasta_path, alignment_dir
-    )     
+        logging.info("Generating features...")
+        alignment_runner.run(
+            args.fasta_path, alignment_dir
+        )       
+    else:
+        logging.info(f"{alignment_dir} exists, so presuming alignments have been pre-computed")
 
     feature_dict = data_processor.process_fasta(
         fasta_path=args.fasta_path, alignment_dir=alignment_dir
