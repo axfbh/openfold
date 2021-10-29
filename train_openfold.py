@@ -61,6 +61,10 @@ class OpenFoldWrapper(pl.LightningModule):
         # Compute loss
         loss = self.loss(outputs, batch)
 
+        #if(torch.isnan(loss) or torch.isinf(loss)):
+        #    logging.warning("loss is NaN. Skipping example...")
+        #    loss = loss.new_tensor(0., requires_grad=True)
+
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx):
