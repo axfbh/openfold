@@ -131,6 +131,9 @@ def main(args):
     data_module.prepare_data()
     data_module.setup()
 
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+
     callbacks = []
     if(args.checkpoint_best_val):
         checkpoint_dir = os.path.join(args.output_dir, "checkpoints")
