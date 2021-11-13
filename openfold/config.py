@@ -225,8 +225,8 @@ config = mlc.ConfigDict(
             "data_module": {
                 "use_small_bfd": False,
                 "data_loaders": {
-                    "batch_size": 1,
-                    "num_workers": 4,
+                    "batch_size": 8,
+                    "num_workers": 16,
                 },
             },
         },

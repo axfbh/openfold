@@ -131,6 +131,9 @@ def main(args):
     data_module.prepare_data()
     data_module.setup()
 
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+
     callbacks = []
     checkpoint_dir = os.path.join(args.output_dir, "checkpoints")
     if(args.checkpoint_best_val):
@@ -158,7 +161,7 @@ def main(args):
         )
         callbacks.append(es)
     if args.log_performance:
-        global_batch_size = args.num_nodes * args.gpus
+        global_batch_size = args.num_nodes * args.gpus * config.data.data_module.data_loaders.batch_size
         perf = PerformanceLoggingCallback(
             log_file=os.path.join(args.output_dir, "performance_log.json"),
             global_batch_size=global_batch_size,

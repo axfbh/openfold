@@ -20,5 +20,3 @@ RUN wget -q -P openfold/resources \
     ln -rs openfold/resources/stereo_chemical_props.txt tests/test_data/alphafold/common
 
 RUN scripts/download_alphafold_params.sh openfold/resources
-
-RUN gunzip tests/test_data/sample_feats.pickle.gz

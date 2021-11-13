@@ -176,6 +176,8 @@ def chunk_layer(
     no_chunks = flat_batch_dim // chunk_size + (
         flat_batch_dim % chunk_size != 0
     )
+    if no_chunks == 1:
+        return layer(**inputs)
 
     i = 0
     out = None
