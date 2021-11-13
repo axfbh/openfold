@@ -45,6 +45,7 @@ def model_config(name, train=False, low_prec=False):
 
     if train:
         c.globals.blocks_per_ckpt = 1
+        c.globals.chunk_size = None
 
     if low_prec:
         c.globals.eps = 1e-4
@@ -225,7 +226,7 @@ config = mlc.ConfigDict(
                 "use_small_bfd": False,
                 "data_loaders": {
                     "batch_size": 1,
-                    "num_workers": 1,
+                    "num_workers": 4,
                 },
             },
         },

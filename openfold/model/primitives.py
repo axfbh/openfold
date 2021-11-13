@@ -34,12 +34,8 @@ def _prod(nums):
     return out
 
 
-def _calculate_fan(shape, fan="fan_in"):
-    i = shape[0]
-    o = shape[1]
-    prod = _prod(shape[:2])
-    fan_in = prod * i
-    fan_out = prod * o
+def _calculate_fan(linear_weight_shape, fan="fan_in"):
+    fan_out, fan_in = linear_weight_shape
 
     if fan == "fan_in":
         f = fan_in
@@ -316,16 +312,10 @@ class GlobalAttention(nn.Module):
         )
 
         self.linear_k = Linear(
-            c_in,
-            c_hidden,
-            bias=False,
-            init="glorot",
+            c_in, c_hidden, bias=False, init="glorot",
         )
         self.linear_v = Linear(
-            c_in,
-            c_hidden,
-            bias=False,
-            init="glorot",
+            c_in, c_hidden, bias=False, init="glorot",
         )
         self.linear_g = Linear(c_in, c_hidden * no_heads, init="gating")
         self.linear_o = Linear(c_hidden * no_heads, c_in, init="final")

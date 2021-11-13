@@ -13,8 +13,7 @@ cases where the *Nature* paper differs from the source, we always defer to the
 latter. 
 
 OpenFold is built to support inference with AlphaFold's original JAX weights.
-Try it out with our [Colab notebook](https://colab.research.google.com/github/aqlaboratory/openfold/blob/main/notebooks/OpenFold.ipynb)
-(not yet visible from Colab because the repo is still private).
+Try it out with our [Colab notebook](https://colab.research.google.com/github/aqlaboratory/openfold/blob/main/notebooks/OpenFold.ipynb).
 
 Unlike DeepMind's public code, OpenFold is also trainable. It can be trained 
 with [DeepSpeed](https://github.com/microsoft/deepspeed) and with mixed 
@@ -25,12 +24,10 @@ future.
 
 Python dependencies available through `pip` are provided in `requirements.txt`. 
 OpenFold depends on `openmm==7.5.1` and `pdbfixer`, which are only available 
-via `conda`. For producing sequence alignments, you'll also need `jackhmmer`, 
-`kalign`, and the [HH-suite](https://github.com/soedinglab/hh-suite) installed 
+via `conda`. For producing sequence alignments, you'll also need
+`kalign`, the [HH-suite](https://github.com/soedinglab/hh-suite), and one of 
+{`jackhmmer`, [MMseqs2](https://github.com/soedinglab/mmseqs2)} installed on
 on your system. Finally, some download scripts require `aria2c`.
-
-Note that the required version of PyTorch Lightning is 1.5.0, which has not
-yet been released. Install that package from the nightly build.
 
 For convenience, we provide a script that installs Miniconda locally, creates a 
 `conda` virtual environment, installs all Python dependencies, and downloads
@@ -60,21 +57,43 @@ To install the HH-suite to `/usr/bin`, run
 
 ## Usage
 
-To download the genetic databases used by AlphaFold/OpenFold, run:
+To download DeepMind's pretrained parameters and common ground truth data, run:
 
 ```bash
-scripts/download_all_data.sh data/
+scripts/download_data.sh data/
 ```
+
+You have two choices for downloading protein databases, depending on whether 
+you want to use DeepMind's MSA generation pipeline (w/ HMMR & HHblits) or 
+[ColabFold](https://github.com/sokrypton/ColabFold)'s, which uses the faster
+MMseqs2 instead. For the former, run:
+
+```bash
+scripts/download_alphafold_databases.sh data/
+```
+
+For the latter, run:
+
+```bash
+scripts/download_mmseqs_databases.sh data/    # downloads .tar files
+scripts/prep_mmseqs_databases.sh data/        # unpacks and preps the databases
+```
+
+Make sure to run the latter command on the machine that will be used for MSA
+generation (the script estimates how the precomputed database index used by
+MMseqs2 should be split according to the memory available on the system).
 
 Alternatively, you can use raw MSAs from 
 [ProteinNet](https://github.com/aqlaboratory/proteinnet). After downloading
 the database, use `scripts/prepare_proteinnet_msas.py` to convert the data into
 a format recognized by the OpenFold parser. The resulting directory becomes the
-`alignment_dir` used in subsequent steps.
+`alignment_dir` used in subsequent steps. Use `scripts/unpack_proteinnet.py` to
+extract `.core` files from ProteinNet text files.
 
 ### Inference
 
-To run inference on a sequence `target.fasta` (e.g., `wget https://www.rcsb.org/fasta/entry/4DSN`) using a set of DeepMind's pretrained parameters, run e.g.
+To run inference on a sequence or multiple sequences using a set of DeepMind's 
+pretrained parameters, run e.g.:
 
 ```bash
 python3 run_pretrained_openfold.py \
@@ -86,24 +105,32 @@ python3 run_pretrained_openfold.py \
     data/uniclust30/uniclust30_2018_08/uniclust30_2018_08 \
     --output_dir ./ \
     --bfd_database_path data/bfd/bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt \
-    --device cuda:1 \
+    --model_device cuda:1 \
     --jackhmmer_binary_path lib/conda/envs/openfold_venv/bin/jackhmmer \
     --hhblits_binary_path lib/conda/envs/openfold_venv/bin/hhblits \
     --hhsearch_binary_path lib/conda/envs/openfold_venv/bin/hhsearch \
     --kalign_binary_path lib/conda/envs/openfold_venv/bin/kalign
 ```
 
-where `data` is the same directory as in the previous step. If `jackhmmer`, `hhblits`, `hhsearch` and `kalign` are available at the default path of `/usr/bin`, their `binary_path` command-line arguments can be dropped. 
+where `data` is the same directory as in the previous step. If `jackhmmer`, 
+`hhblits`, `hhsearch` and `kalign` are available at the default path of 
+`/usr/bin`, their `binary_path` command-line arguments can be dropped.
+If you've already computed alignments for the query, you have the option to 
+circumvent the expensive alignment computation here.
 
 ### Training
 
-After activating the OpenFold environment with `source scripts/activate_conda_env.sh`, install OpenFold by running
+After activating the OpenFold environment with 
+`source scripts/activate_conda_env.sh`, install OpenFold by running
 
 ```bash
 python setup.py install
 ```
 
-To train the model, you will first need to precompute protein alignments. Create `mmcif_dir/` and download `.cif` files from the PDB (e.g., `wget https://files.rcsb.org/download/4DSN.cif`). Then run:
+To train the model, you will first need to precompute protein alignments. 
+
+You have two options. You can use the same procedure DeepMind used by running
+the following:
 
 ```bash
 python3 scripts/precompute_alignments.py mmcif_dir/ alignment_dir/ \
@@ -119,8 +146,28 @@ python3 scripts/precompute_alignments.py mmcif_dir/ alignment_dir/ \
     --hhsearch_binary_path lib/conda/envs/openfold_venv/bin/hhsearch \
     --kalign_binary_path lib/conda/envs/openfold_venv/bin/kalign
 ```
-As noted before, you can skip the `binary_path` arguments if these binaries are at `/usr/bin`.
-Expect this step to take a very long time, even for small numbers of proteins.
+
+As noted before, you can skip the `binary_path` arguments if these binaries are 
+at `/usr/bin`. Expect this step to take a very long time, even for small 
+numbers of proteins.
+
+Alternatively, you can generate MSAs with the ColabFold pipeline (and templates
+with HHsearch) with:
+
+```bash
+python3 scripts/precompute_alignments_mmseqs.py input.fasta \
+    data/mmseqs_dbs \
+    uniref30_2103_db \
+    alignment_dir \
+    ~/MMseqs2/build/bin/mmseqs \
+    /usr/bin/hhsearch \
+    --env_db colabfold_envdb_202108_db
+    --pdb70 data/pdb70/pdb70
+```
+
+where `input.fasta` is a FASTA file containing one or more query sequences. To 
+generate an input FASTA from a directory of mmCIF and/or ProteinNet .core 
+files, we provide `scripts/data_dir_to_fasta.py`.
 
 Next, generate a cache of certain datapoints in the mmCIF files:
 
@@ -168,7 +215,7 @@ The script is a thin wrapper around Python's `unittest` suite, and recognizes
 scripts/run_unit_tests.sh -v tests.test_model
 ```
 
-Certain tests require that AlphaFold be installed in the same Python
+Certain tests require that AlphaFold (v. 2.0.1) be installed in the same Python
 environment. These run components of AlphaFold and OpenFold side by side and
 ensure that output activations are adequately similar. For most modules, we
 target a maximum difference of `1e-4`.
@@ -183,4 +230,10 @@ thereby made unavailable for commercial use.
 
 ## Contributing
 
-If you encounter problems using OpenFold, feel free to create an issue!
+If you encounter problems using OpenFold, feel free to create an issue! We also
+welcome pull requests from the community.
+
+## Citing this work
+
+Stay tuned for an OpenFold DOI. Any work that cites OpenFold should also cite
+AlphaFold.
