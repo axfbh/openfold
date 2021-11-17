@@ -1,3 +1,5 @@
+![header ](imgs/OpenFold_viz_banner.jpg)
+
 # OpenFold
 
 A faithful PyTorch reproduction of DeepMind's 
@@ -209,7 +211,7 @@ scripts/run_unit_tests.sh
 ```
 
 The script is a thin wrapper around Python's `unittest` suite, and recognizes
-`unittest` commands. E.g., to run a specific test verbosely:
+`unittest` arguments. E.g., to run a specific test verbosely:
 
 ```bash
 scripts/run_unit_tests.sh -v tests.test_model
@@ -235,5 +237,4 @@ welcome pull requests from the community.
 
 ## Citing this work
 
-Stay tuned for an OpenFold DOI. Any work that cites OpenFold should also cite
-AlphaFold.
+Stay tuned for an OpenFold DOI.

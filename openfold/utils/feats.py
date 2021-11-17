@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
+
 import numpy as np
 import torch
 import torch.nn as nn
 from typing import Dict
 
+from openfold.np import protein
 import openfold.np.residue_constants as rc
 from openfold.utils.affine_utils import T
 from openfold.utils.tensor_utils import (
@@ -159,55 +162,6 @@ def build_extra_msa_feat(batch):
         batch["extra_deletion_value"].unsqueeze(-1),
     ]
     return torch.cat(msa_feat, dim=-1)
-
-
-# adapted from model/tf/data_transforms.py
-def build_msa_feat(batch):
-    """Create and concatenate MSA features."""
-    # Whether there is a domain break. Always zero for chains, but keeping
-    # for compatibility with domain datasets.
-    has_break = batch["between_segment_residues"]
-    aatype_1hot = nn.functional.one_hot(batch["aatype"], num_classes=21)
-
-    target_feat = [
-        has_break.unsqueeze(-1),
-        aatype_1hot,  # Everyone gets the original sequence.
-    ]
-
-    msa_1hot = nn.functional.one_hot(batch["msa"], num_classes=23)
-    has_deletion = batch["deletion_matrix"]
-    deletion_value = torch.atan(batch["deletion_matrix"] / 3.0) * (
-        2.0 / math.pi
-    )
-
-    msa_feat = [
-        msa_1hot,
-        has_deletion.unsqueeze(-1),
-        deletion_value.unsqueeze(-1),
-    ]
-
-    if "cluster_profile" in batch:
-        deletion_mean_value = tf.atan(batch["cluster_deletion_mean"] / 3.0) * (
-            2.0 / np.pi
-        )
-        msa_feat.extend(
-            [
-                batch["cluster_profile"],
-                tf.expand_dims(deletion_mean_value, axis=-1),
-            ]
-        )
-
-    if "extra_deletion_matrix" in protein:
-        batch["extra_has_deletion"] = tf.clip_by_value(
-            batch["extra_deletion_matrix"], 0.0, 1.0
-        )
-        batch["extra_deletion_value"] = tf.atan(
-            batch["extra_deletion_matrix"] / 3.0
-        ) * (2.0 / np.pi)
-
-    batch["msa_feat"] = torch.cat(msa_feat, dim=-1)
-    batch["target_feat"] = torch.cat(target_feat, dim=-1)
-    return batch
 
 
 def torsion_angles_to_frames(

@@ -48,7 +48,7 @@ def import_alphafold():
 
 
 def get_alphafold_config():
-    config = alphafold.model.config.model_config("model_1_ptm")
+    config = alphafold.model.config.model_config("model_1_ptm")  # noqa
     config.model.global_config.deterministic = True
     return config
 
@@ -100,5 +100,11 @@ def fetch_alphafold_module_weights(weight_path):
         module_name = spl[-1]
         prefix = "/".join(spl[:-1]) + "/"
         _remove_key_prefix(params, prefix)
-    params = alphafold.model.utils.flat_params_to_haiku(params)
+
+    try:
+        params = alphafold.model.utils.flat_params_to_haiku(params)  # noqa
+    except:
+        raise ImportError(
+            "Make sure to call import_alphafold before running this function"
+        )
     return params

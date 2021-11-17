@@ -26,13 +26,10 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from openfold.data import parsers, mmcif_parsing
+from openfold.data.errors import Error
 from openfold.data.tools import kalign
 from openfold.data.tools.utils import to_date
 from openfold.np import residue_constants
-
-
-class Error(Exception):
-    """Base class for exceptions."""
 
 
 class NoChainsError(Error):
@@ -57,10 +54,6 @@ class QueryToTemplateAlignError(Error):
 
 class CaDistanceError(Error):
     """An error indicating that a CA atom distance exceeds a threshold."""
-
-
-class MultipleChainsError(Error):
-    """An error indicating that multiple chains were found for a given ID."""
 
 
 # Prefilter exceptions.
@@ -798,12 +791,18 @@ def _process_single_hit(
     hit: parsers.TemplateHit,
     mmcif_dir: str,
     max_template_date: datetime.datetime,
+    release_dates: Mapping[str, datetime.datetime],
+    obsolete_pdbs: Mapping[str, str],
     kalign_binary_path: str,
     strict_error_check: bool = False,
 ) -> SingleHitResult:
     """Tries to extract template features from a single HHSearch hit."""
     # Fail hard if we can't get the PDB ID and chain name from the hit.
     hit_pdb_code, hit_chain_id = _get_pdb_id_and_chain(hit)
+
+    if hit_pdb_code not in release_dates:
+        if hit_pdb_code in obsolete_pdbs:
+            hit_pdb_code = obsolete_pdbs[hit_pdb_code]
 
     mapping = _build_query_to_hit_index_mapping(
         hit.query,
@@ -1054,6 +1053,8 @@ class TemplateHitFeaturizer:
                 hit=hit,
                 mmcif_dir=self._mmcif_dir,
                 max_template_date=template_cutoff_date,
+                release_dates=self._release_dates,
+                obsolete_pdbs=self._obsolete_pdbs,
                 strict_error_check=self._strict_error_check,
                 kalign_binary_path=self._kalign_binary_path,
             )
