@@ -375,9 +375,6 @@ if __name__ == "__main__":
         "--train_epoch_len", type=int, default=10000,
     )
     parser.add_argument(
-        "--obsolete_pdbs_file_path", type=str,
-    )
-    parser.add_argument(
         "--_alignment_index_path", type=str, default=None,
     )
     parser = pl.Trainer.add_argparse_args(parser)
