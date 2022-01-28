@@ -410,10 +410,8 @@ class Attention(nn.Module):
         Args:
             q_x:
                 [*, Q, C_q] query data
-            k_x:
+            kv_x:
                 [*, K, C_k] key data
-            v_x:
-                [*, V, C_v] value data
         Returns
             [*, Q, C_q] attention update
         """
@@ -429,7 +427,7 @@ class Attention(nn.Module):
 
         if(use_lma):
             biases = [
-                b.expand(b.shape[:-2] + (q_x.shape[-2],) + (k_x.shape[-2],)) 
+                b.expand(b.shape[:-2] + (q_x.shape[-2],) + (kv_x.shape[-2],)) 
                 for b in biases
             ]
 
@@ -546,7 +544,7 @@ def _lma(
             ]
 
             a = torch.einsum(
-                "...qhd,...khd->...hqk", query, key
+                "...qhd,...khd->...hqk", q_chunk, k_chunk
             )
         
             for b in small_bias_chunks:
@@ -556,7 +554,7 @@ def _lma(
         
             max_a = torch.max(a, dim=-1, keepdim=True)[0]
             exp_a = torch.exp(a - max_a)
-            exp_v = torch.einsum("...vhf,...qhv->...qhf", value, exp_a)
+            exp_v = torch.einsum("...vhf,...qhv->...qhf", v_chunk, exp_a)
  
             maxes.append(max_a.detach().squeeze(-1))
             weights.append(torch.sum(exp_a, dim=-1))
