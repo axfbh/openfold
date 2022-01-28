@@ -67,15 +67,10 @@ class OpenFoldWrapper(pl.LightningModule):
 
         # Compute loss
         loss = self.loss(outputs, batch)
-<<<<<<< HEAD
 
         self.log("train/loss", loss, logger=True)
 
         return loss
-=======
-        self.log("loss", loss)
-        return {"loss": loss}
->>>>>>> 0067da9fbaad9ff7ed0c36d63791ea297757f5d9
 
     def validation_step(self, batch, batch_idx):
         # At the start of validation, load the EMA weights
