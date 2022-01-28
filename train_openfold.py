@@ -81,7 +81,7 @@ class OpenFoldWrapper(pl.LightningModule):
         # Calculate validation loss
         outputs = self(batch)
         batch = tensor_tree_map(lambda t: t[..., -1], batch)
-<<<<<<< HEAD
+        
         loss = lddt_ca(
             outputs["final_atom_positions"],
             batch["all_atom_positions"],
@@ -90,11 +90,6 @@ class OpenFoldWrapper(pl.LightningModule):
             per_residue=False,
         )
         self.log("val/loss", loss, logger=True)
-=======
-        loss = self.loss(outputs, batch)
-        self.log("val_loss", loss, prog_bar=True)
-        return {"val_loss": loss}
->>>>>>> 0067da9fbaad9ff7ed0c36d63791ea297757f5d9
 
     def validation_epoch_end(self, _):
         # Restore the model weights to normal
