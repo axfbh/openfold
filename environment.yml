@@ -28,3 +28,6 @@ dependencies:
       - pytorch_lightning==1.5.10
       - wandb==0.12.21
       - git+https://github.com/NVIDIA/dllogger.git
+      - pytorch==1.12.* -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/linux-64/
+      - cudatoolkit==11.3.* -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/linux-64/
+
